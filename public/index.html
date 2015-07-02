@@ -9,26 +9,83 @@
   	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <title>eyo</title>
 <script>
-$.getJSON("/webm", function( data ) {
+stash = [];
+init();
+function playVideo(e) {
+  $("#video").empty();
+  obj = stash[e];
+  $("#video").append("<video width='960' height='600' controls>" + "<source src='webms/"+ obj.path +".webm' type='video/webm'>"+
+  "Your browser does not support the video tag."+
+  "</video>")
+  addTags(e);
+}
+
+function addTags(e) {
+  $("#tags").empty();
+  var items = [];
+  obj = stash[e];
+  $.each( obj.tags, function( key, val ) {
+    items.push( "<div id='"+ key+"'>"+ val +"</div>");
+  });
+    $( "<div/>", {
+    html: items.join( " " )
+  }).appendTo("#tags");
+}
+
+function init(){
+  $.getJSON("/webm", function( data ) {
   var items = [];
   console.log(data)
+  stash = data.Webm;
   $.each( data.Webm, function( key, val ) {
-    items.push( "<div class='one-third column' id='" + key + "'>" + val.name + 
-    "<video width='320' height='240' controls>" + "<source src='webms/"+ val.path +".webm' type='video/webm'>"+
-	"Your browser does not support the video tag."+
-	"</video>" + "</div>" );
+    items.push( "<div id='"+ key+"' onclick='playVideo("+ key +");'>"+ val.name +"</div>" );
   });
  
   $( "<div/>", {
-    "class": "row",
     html: items.join( "" )
-  }).appendTo("#cont");
+  }).appendTo("#list");
 });
+
+}
+
+function filter(){
+  text = document.getElementById("filter").value;
+  if (text == "") {
+    $("#list").empty();
+    init();
+  }else {
+  arr = text.split(" ")
+  arr = arr.join("+")
+  console.log(arr);
+  $("#list").empty();
+  $.getJSON("/webm/filter/"+arr, function( data ) {
+    var items = [];
+    stash = data.Webm;
+    $.each( data.Webm, function( key, val ) {
+      items.push( "<div id='"+ key+"' onclick='playVideo("+ key +");'>"+ val.name +"</div>" );
+    });
+   
+    $( "<div/>", {
+      html: items.join( "" )
+    }).appendTo("#list");
+  });
+}
+}
+
 </script>
 </head>
 <body>
-<div class="container" id="cont">
+<input type="text" placeholder="alex" id="filter">
+<button class="button-primary" onclick="filter()">Search</button>
+<br>
+<div class="u-pull-left" style="width:200px;padding: 1px;margin: 0px;" id="list">
 
+</div>
+<div style="margin-left: 200px;" id="videowrap">
+  <div id="video">
+  </div>
+  <div id="tags">
+  </div>
 </div>
 </body>
 </html>

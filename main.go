@@ -79,12 +79,22 @@ func main() {
 
 	e := echo.New()
 	e.SetDebug(true)
-	e.Use(mw.Gzip())
 	e.Use(mw.Recover())
 	e.Static("/assets/", "public/assets")
+	e.Get("/webms/:name", func(c *echo.Context) error {
+		resp := c.Response()
+		name := c.Param("name")
+		resp.Header().Add("Content-Type", "video/webm")
+		http.ServeFile(resp, c.Request(), "webms/"+name)
+		return nil
+	})
 	e.Static("/webms/", "webms")
 
-	e.ServeFile("/", "public/index.html")
+	//e.ServeFile("/", "public/index.html")
+	e.Get("/", func(c *echo.Context) error {
+		http.ServeFile(c.Response(), c.Request(), "public/index.html")
+		return nil
+	})
 
 	e.ServeFile("/upload", "public/upload.html")
 	e.Post("/upload", func(c *echo.Context) error {
@@ -128,6 +138,19 @@ func main() {
 			return err
 		}
 		by, err := result.ToJson()
+		if err != nil {
+			return err
+		}
+		return c.String(200, string(by))
+	})
+
+	e.Get("/webm/filter/:filter", func(c *echo.Context) error {
+		tags := strings.Split(c.Param("filter"), "+")
+		result, err := api.NewQuery("WebmCont", rootid).Collect("Webm").Run(ctx)
+		if err != nil {
+			return err
+		}
+		by, err := filter(result, tags...)
 		if err != nil {
 			return err
 		}
