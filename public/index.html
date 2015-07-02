@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/assets/normalize.css">
+  	<link rel="stylesheet" href="/assets/skeleton.css">
+  	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <title>eyo</title>
+<script>
+$.getJSON("/webm", function( data ) {
+  var items = [];
+  console.log(data)
+  $.each( data.Webm, function( key, val ) {
+    items.push( "<div class='one-third column' id='" + key + "'>" + val.name + 
+    "<video width='320' height='240' controls>" + "<source src='webms/"+ val.path +".webm' type='video/webm'>"+
+	"Your browser does not support the video tag."+
+	"</video>" + "</div>" );
+  });
+ 
+  $( "<div/>", {
+    "class": "row",
+    html: items.join( "" )
+  }).appendTo("#cont");
+});
+</script>
+</head>
+<body>
+<div class="container" id="cont">
+
+</div>
+</body>
+</html>
