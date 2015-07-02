@@ -29,7 +29,16 @@ type Webm struct {
 
 func contains(s []interface{}, e string) bool {
 	for _, a := range s {
-		if a.(string) == e {
+		if strings.Contains(a.(string), e) {
+			return true
+		}
+	}
+	return false
+}
+
+func contains2(s []string, e string) bool {
+	for _, a := range s {
+		if strings.Contains(a, e) {
 			return true
 		}
 	}
@@ -74,7 +83,6 @@ func main() {
 	l := new(store.Leveldb)
 	l.SetBloomFilter(13)
 	ctx.Store = l
-	//ctx.Store.Init("leveldb", x.UniqueString(10))
 	ctx.Store.Init("leveldb", "test")
 
 	e := echo.New()
@@ -169,5 +177,50 @@ func main() {
 		return c.String(200, string(by))
 	})
 
+	e.Get("/webm/:id/tag/:tag", func(c *echo.Context) error {
+		result, err := api.NewQuery("Webm", c.Param("id")).Run(ctx)
+		if err != nil {
+			return err
+		}
+		var tags []interface{}
+		tagb, ok := result.Columns["tags"].Value.([]interface{})
+		if ok {
+			tags = tagb
+		}
+		cont := contains(tags, c.Param("tag"))
+		var atags []string
+		var resp string
+		if cont {
+			resp = "removed"
+			atags = convertButLeave(tags, c.Param("tag"))
+		} else {
+			resp = "added"
+			atags = convert(tags)
+			atags = append(atags, c.Param("tag"))
+		}
+		err = api.Get("Webm", c.Param("id")).SetSource(rootid).Set("tags", atags).Execute(ctx)
+		if err != nil {
+			return err
+		}
+
+		return c.String(200, resp)
+	})
+
 	graceful.ListenAndServe(e.Server(":8080"), 5*time.Second)
+}
+
+func convertButLeave(s []interface{}, e string) (b []string) {
+	for _, v := range s {
+		if v.(string) != e {
+			b = append(b, v.(string))
+		}
+	}
+	return
+}
+
+func convert(s []interface{}) (b []string) {
+	for _, v := range s {
+		b = append(b, v.(string))
+	}
+	return
 }

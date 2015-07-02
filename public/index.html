@@ -9,9 +9,27 @@
   	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <title>eyo</title>
 <script>
+
 stash = [];
-init();
+position = 0;
+
+jQuery(window).load(function () {
+  init();
+  document.getElementById("filter").onkeyup = function(e) {
+    if(e.keyCode == 13){
+      filter();
+    }
+  };
+  document.getElementById("addtag").onkeyup = function(e) {
+    if(e.keyCode == 13){
+      tag(document.getElementById("addtag").value);
+      document.getElementById("addtag").value = "";
+    }
+  };
+});
+
 function playVideo(e) {
+  position = e;
   $("#video").empty();
   obj = stash[e];
   $("#video").append("<video width='960' height='600' controls>" + "<source src='webms/"+ obj.path +".webm' type='video/webm'>"+
@@ -20,32 +38,28 @@ function playVideo(e) {
   addTags(e);
 }
 
+
 function addTags(e) {
   $("#tags").empty();
   var items = [];
   obj = stash[e];
-  $.each( obj.tags, function( key, val ) {
-    items.push( "<div id='"+ key+"'>"+ val +"</div>");
+  $.each( obj.tags, function( key, val ) {   
+    items.push("<button id='"+val+"' onclick='tag(\""+val+"\");'>"+val+"</button>");
   });
-    $( "<div/>", {
-    html: items.join( " " )
-  }).appendTo("#tags");
+  $('#tags').append(items.join(" "));
 }
 
 function init(){
   $.getJSON("/webm", function( data ) {
-  var items = [];
-  console.log(data)
-  stash = data.Webm;
-  $.each( data.Webm, function( key, val ) {
-    items.push( "<div id='"+ key+"' onclick='playVideo("+ key +");'>"+ val.name +"</div>" );
-  });
- 
-  $( "<div/>", {
-    html: items.join( "" )
-  }).appendTo("#list");
-});
+    var items = [];
+    console.log(data)
+    stash = data.Webm;
+    $.each( data.Webm, function( key, val ) {
+      items.push( "<div id='"+ key+"' onclick='playVideo("+ key +");'>"+ val.name +"</div>" );
+    });
 
+    $('#list').append(items.join(" "));
+  });
 }
 
 function filter(){
@@ -72,11 +86,22 @@ function filter(){
 }
 }
 
+function tag(tag) {
+  obj = stash[position];
+  $.get("/webm/"+obj.id+"/tag/"+tag, function( data ) {
+    if (data == "removed") {
+      $("#"+tag).remove();
+    }else {
+      $("#tags").append(" <button id='"+tag+"' onclick='tag(\""+tag+"\");'>"+tag+"</button>")
+    }
+  });
+}
 </script>
 </head>
 <body>
 <input type="text" placeholder="alex" id="filter">
 <button class="button-primary" onclick="filter()">Search</button>
+<input type="text" placeholder="gargoyle" id="addtag">
 <br>
 <div class="u-pull-left" style="width:200px;padding: 1px;margin: 0px;" id="list">
 
